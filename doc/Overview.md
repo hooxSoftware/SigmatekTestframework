@@ -98,76 +98,116 @@ durchlaufen". Das Pass/Fail der einzelnen Assertions wird getrennt davon gezähl
 
 ## 5. Minimales Beispiel
 
-### Klassendeklaration
+Das folgende Beispiel zeigt einen realen Test für eine einfache Zählerklasse
+`CCount`, die `addValue()` und `subValue()` bereitstellt. Die getestete Klasse
+wird als **Client-Channel** (nicht als Member-Variable) in die Testklasse
+eingebunden und im LASAL-Netzwerk verdrahtet.
+
+### Class Under Test: `CCount`
 
 ```st
-CMyTest : CLASS EXTENDS CTestBase
+CCount : CLASS
 
-  // Test-spezifische Variablen
-  testValue : DINT;
+  // Servers
+  Value : SvrChCmd_DINT;
 
-  FUNCTION VIRTUAL initialize;
-
-  FUNCTION VIRTUAL prepare
-    VAR_OUTPUT
-      bRetcode : BOOL;
+  FUNCTION GLOBAL addValue
+    VAR_INPUT
+      u32Value : DINT;
     END_VAR;
 
+  FUNCTION GLOBAL subValue
+    VAR_INPUT
+      u32Value : DINT;
+    END_VAR;
+
+END_CLASS;
+
+FUNCTION GLOBAL CCount::addValue
+  VAR_INPUT
+    u32Value : DINT;
+  END_VAR
+
+  Value += u32Value;
+END_FUNCTION
+
+FUNCTION GLOBAL CCount::subValue
+  VAR_INPUT
+    u32Value : DINT;
+  END_VAR
+
+  Value -= u32Value;
+END_FUNCTION
+```
+
+### Testklasse: `CCount_Test`
+
+```st
+#pragma using CTestBase
+
+CCount_Test : CLASS
+: CTestBase
+
+  // Client – im Netzwerk mit CCount.Value verbunden
+  TestObject : CltChCmd_CCount;
+
+  FUNCTION VIRTUAL initialize;
   FUNCTION VIRTUAL execute
     VAR_OUTPUT
       bRetcode : BOOL;
     END_VAR;
 
-  FUNCTION VIRTUAL cleanUp
-    VAR_OUTPUT
-      bRetcode : BOOL;
-    END_VAR;
-
 END_CLASS;
+
+#pragma using CCount
 ```
+
+Weder `prepare()` noch `cleanUp()` werden überschrieben – beide sind optional.
 
 ### Implementierung
 
 ```st
-// 1. Metadaten (einmalig)
-FUNCTION VIRTUAL CMyTest::initialize
-  setPackage(pName:= "com.mycompany.tests");
-  setClassName(pName:= "CMyTest");
-  setTestId(pData:= "test_01_basic_functionality");
+// Metadaten (einmalig)
+FUNCTION VIRTUAL CCount_Test::initialize
+  setPackage(pName:= "Unittest/Example");
+  setClassName(pName:= "CCount");
+  setTestId(pData:= "TestID002");
 END_FUNCTION
 
-// 2. Setup vor jedem Test
-FUNCTION VIRTUAL CMyTest::prepare
+// Testlogik mit Assertions
+FUNCTION VIRTUAL CCount_Test::execute
   VAR_OUTPUT
     bRetcode : BOOL;
   END_VAR
 
-  testValue := 0;
-  bRetcode  := TRUE;
-END_FUNCTION
+  setMessage(pData:= "add 35");
+  TestObject.addValue(u32Value:= 35);
+  _assert.Equal(actual:= TestObject.Value, expected:= 35);
 
-// 3. Testlogik mit Assertions
-FUNCTION VIRTUAL CMyTest::execute
-  VAR_OUTPUT
-    bRetcode : BOOL;
-  END_VAR
+  setMessage(pData:= "add 35 more");
+  TestObject.addValue(u32Value:= 35);
+  _assert.Equal(actual:= TestObject.Value, expected:= 70);
 
-  testValue := 42;
-  _assert.Equal(actual:= testValue, expected:= 42);
+  setMessage(pData:= "sub 70");
+  TestObject.subValue(u32Value:= 70);
+  _assert.Equal(actual:= TestObject.Value, expected:= 0);
 
   bRetcode := TRUE;
 END_FUNCTION
-
-// 4. Teardown
-FUNCTION VIRTUAL CMyTest::cleanUp
-  VAR_OUTPUT
-    bRetcode : BOOL;
-  END_VAR
-
-  testValue := 0;
-  bRetcode  := TRUE;
-END_FUNCTION
 ```
+
+### Was dieses Beispiel zeigt
+
+- **CUT als Client-Channel:** `TestObject : CltChCmd_CCount` wird im
+  LASAL-Netzwerk mit `CCount.Value` verdrahtet. Die Testklasse instanziiert
+  `CCount` nicht selbst.
+- **`setMessage()` pro Schritt:** Vor jeder Testaktion wird eine kurze
+  Beschreibung gesetzt. Schlägt die folgende Assertion fehl, zeigt das
+  Framework diesen Text als Kontext an.
+- **`prepare`/`cleanUp` optional:** Werden nicht gebraucht, weil der Zähler
+  bei 0 startet und der Test am Ende wieder auf 0 zurückrechnet.
+- **Mehrere Assertions in einem Test:** Addition, erneute Addition und
+  Subtraktion werden in einer zusammenhängenden Sequenz geprüft.
 
 ---
 
@@ -206,6 +246,7 @@ Vollständige Signaturen, Parameter und Fatal-Varianten: siehe Reference.
 4. **`bRetcode := TRUE`** – immer zurückgeben, außer bei echtem Framework-Fehler
 5. **Fatal bewusst einsetzen** – nur für kritische Vorbedingungen (z. B. `_malloc`-Ergebnis)
 6. **Typen casten** – für Vergleiche bei Bedarf auf `DINT` casten, z. B. `testBuffer[0]$DINT`
+7. **`setMessage()` pro Schritt** – bei mehreren Assertions in einem Test vor jedem Schritt eine kurze Beschreibung setzen, damit im Fehlerfall erkennbar ist, welcher Teil fehlgeschlagen ist
 
 ---
 

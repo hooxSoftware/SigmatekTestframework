@@ -26,7 +26,8 @@ Einstieg und Konzepte siehe [Overview](LASAL2-Testframework-Overview.md).
 3. [Test-States](#3-test-states)
 4. [Typ-Casting](#4-typ-casting)
 5. [Komplettbeispiel](#5-komplettbeispiel)
-6. [Test-Ausführungsablauf](#6-test-ausführungsablauf)
+6. [Erweitertes Beispiel: REAL-Werte & gezielte Methodentests](#6-erweitertes-beispiel-real-werte--gezielte-methodentests)
+7. [Test-Ausführungsablauf](#7-test-ausführungsablauf)
 
 ---
 
@@ -371,264 +372,370 @@ _assert.Equal(actual:= testBuffer[0]$DINT, expected:= 0);
 
 ## 5. Komplettbeispiel
 
-Testklasse für `CPnDataIn` (Profinet-Datenempfang) mit mehreren Testfällen in einem `execute()`-Aufruf.
+Testklasse `CCount_Test` für die Zählerklasse `CCount` mit den Methoden
+`addValue()` und `subValue()`. Die Class Under Test wird als
+**Client-Channel** eingebunden und im LASAL-Netzwerk verdrahtet – die
+Testklasse instanziiert `CCount` nicht selbst.
 
-### Klassendeklaration
+### Class Under Test: `CCount`
 
 ```st
-(*
- * Test class for CPnDataIn
- * Tests Profinet data reception functionality
- *)
-CTestCPnDataIn : CLASS EXTENDS CTestBase
+CCount : CLASS
 
-  // Instanz der Klasse under test
-  testInstance : CPnDataIn;
+  // Servers
+  Value : SvrChCmd_DINT;
 
-  // Testdaten
-  testBuffer : ARRAY [0..100] OF BYTE;
-  testResult : BOOL;
+  FUNCTION GLOBAL addValue
+    VAR_INPUT
+      u32Value : DINT;
+    END_VAR;
+
+  FUNCTION GLOBAL subValue
+    VAR_INPUT
+      u32Value : DINT;
+    END_VAR;
+
+END_CLASS;
+
+FUNCTION GLOBAL CCount::addValue
+  VAR_INPUT
+    u32Value : DINT;
+  END_VAR
+
+  Value += u32Value;
+END_FUNCTION
+
+FUNCTION GLOBAL CCount::subValue
+  VAR_INPUT
+    u32Value : DINT;
+  END_VAR
+
+  Value -= u32Value;
+END_FUNCTION
+```
+
+### Testklasse: `CCount_Test`
+
+```st
+#pragma using CTestBase
+
+CCount_Test : CLASS
+: CTestBase
+
+  // Client – im Netzwerk mit CCount.Value verbunden
+  TestObject : CltChCmd_CCount;
 
   FUNCTION VIRTUAL initialize;
-  FUNCTION VIRTUAL prepare
-    VAR_OUTPUT
-      bRetcode : BOOL;
-    END_VAR;
   FUNCTION VIRTUAL execute
     VAR_OUTPUT
       bRetcode : BOOL;
     END_VAR;
-  FUNCTION VIRTUAL cleanUp
+
+END_CLASS;
+
+#pragma using CCount
+```
+
+`prepare()` und `cleanUp()` werden nicht überschrieben – beide sind optional
+und für diesen Test nicht nötig.
+
+### Netzwerk-Verdrahtung
+
+Im LASAL-Netzwerk wird die `CCount_Test`-Instanz mit einer `CCount`-Instanz
+verbunden:
+
+```
+CCount_Test.TestObject  ──────►  CCount.Value
+```
+
+Zusätzlich werden die `CTestBase`-Channels (`State`, `Deactivate`, `TestSuite`)
+über die Basisklassen-Instanz `_base` geroutet. Das erledigt der
+LASAL2-CodeGenerator auf Basis der Class-Definition.
+
+### `initialize` – Metadaten
+
+```st
+FUNCTION VIRTUAL CCount_Test::initialize
+
+  setPackage(pName:= "Unittest/Example");
+  setClassName(pName:= "CCount");
+  setTestId(pData:= "TestID002");
+
+END_FUNCTION
+```
+
+### `execute` – Testlogik
+
+```st
+FUNCTION VIRTUAL CCount_Test::execute
+  VAR_OUTPUT
+    bRetcode : BOOL;
+  END_VAR
+
+  setMessage(pData:= "add 35");
+  TestObject.addValue(u32Value:= 35);
+  _assert.Equal(actual:= TestObject.Value, expected:= 35);
+
+  setMessage(pData:= "add 35 more");
+  TestObject.addValue(u32Value:= 35);
+  _assert.Equal(actual:= TestObject.Value, expected:= 70);
+
+  setMessage(pData:= "sub 70");
+  TestObject.subValue(u32Value:= 70);
+  _assert.Equal(actual:= TestObject.Value, expected:= 0);
+
+  bRetcode := TRUE;
+
+END_FUNCTION
+```
+
+### Was dieses Beispiel zeigt
+
+- **CUT als Client-Channel** – `TestObject : CltChCmd_CCount` wird im
+  LASAL-Netzwerk mit `CCount.Value` verdrahtet. Das ist der idiomatische Weg,
+  die zu testende Klasse in die Testklasse einzubinden.
+- **`setMessage()` pro Schritt** – vor jeder Testaktion wird eine kurze
+  Beschreibung gesetzt. Schlägt die folgende Assertion fehl, zeigt das
+  Framework diesen Text als Kontext an.
+- **`prepare`/`cleanUp` optional** – werden nicht gebraucht, weil `Value` bei 0
+  startet und der Test am Ende wieder auf 0 zurückrechnet.
+- **Mehrere Assertions sequenziell** – Addition, erneute Addition und
+  Subtraktion werden als zusammenhängende Sequenz geprüft, sodass ein
+  fehlgeschlagener Schritt sofort klar zuzuordnen ist.
+
+---
+
+## 6. Erweitertes Beispiel: REAL-Werte & gezielte Methodentests
+
+Dieses Beispiel baut auf den bisherigen Konzepten auf und zeigt zusätzlich:
+
+- **REAL-Assertions mit Toleranz** (`RealEqual` mit `granularity`)
+- **Gezieltes Testen einer einzelnen Methode** einer Klasse mit mehreren
+  Funktionen – `setClassName` bekommt hierzu den Namen `Klasse.Methode`
+- **Direkte Verwendung des Rückgabewerts** in der Assertion, ohne
+  Zwischenvariable
+
+### Class Under Test: `CUltimateClass`
+
+`CUltimateClass` hat mehrere Methoden. Hier interessiert nur `Pythagoras()`,
+die bei gegebenen zwei Seiten eines rechtwinkligen Dreiecks die dritte
+berechnet – welche Seite fehlt, wird dadurch signalisiert, dass der
+entsprechende Parameter `0` ist.
+
+```st
+CUltimateClass : CLASS
+
+  // Servers
+  Result : SvrChCmd_DINT;
+
+  // Clients
+  Client1 : CltCh_DINT;
+  Client2 : CltCh_DINT;
+  Client3 : CltCh_DINT;
+
+  FUNCTION GLOBAL Pythagoras
+    VAR_INPUT
+      a : REAL;
+      b : REAL;
+      c : REAL;
+    END_VAR
+    VAR_OUTPUT
+      result : REAL;
+    END_VAR;
+
+  // ... weitere Methoden: Calculate, expt, Result::Read, Result::Write
+
+END_CLASS;
+```
+
+Implementierung von `Pythagoras` (gekürzt):
+
+```st
+FUNCTION GLOBAL CUltimateClass::Pythagoras
+  VAR_INPUT
+    a : REAL;
+    b : REAL;
+    c : REAL;
+  END_VAR
+  VAR_OUTPUT
+    result : REAL;
+  END_VAR
+  VAR
+    d : REAL;
+  END_VAR
+
+  result := 0;
+
+  // Mindestens zwei Seiten müssen bekannt sein
+  IF (a = 0 & b = 0) |
+     (a = 0 & c = 0) |
+     (b = 0 & c = 0) THEN
+    RETURN;
+  END_IF;
+
+  IF a = 0 THEN
+    d := expt(c, 2) - expt(b, 2);
+  END_IF;
+
+  IF b = 0 THEN
+    d := expt(c, 2) - expt(a, 2);
+  END_IF;
+
+  IF c = 0 THEN
+    d := expt(a, 2) + expt(b, 2);
+  END_IF;
+
+  IF d > 0 THEN
+    result := SQRT(d);
+  END_IF;
+
+END_FUNCTION
+```
+
+### Testklasse: `Pythagoras_Test`
+
+```st
+#pragma using CTestBase
+
+Pythagoras_Test : CLASS
+: CTestBase
+
+  // Client – im Netzwerk mit CUltimateClass.Result verbunden
+  Testobject : CltChCmd_CUltimateClass;
+
+  FUNCTION VIRTUAL initialize;
+  FUNCTION VIRTUAL execute
     VAR_OUTPUT
       bRetcode : BOOL;
     END_VAR;
 
 END_CLASS;
+
+#pragma using CUltimateClass
 ```
 
-### `initialize` – Metadaten
+### Netzwerk-Verdrahtung
+
+```
+Pythagoras_Test.Testobject  ──────►  CUltimateClass.Result
+```
+
+Die drei Clients von `CUltimateClass` (`Client1`, `Client2`, `Client3`) werden
+für diesen Test nicht gebraucht – `Pythagoras()` arbeitet ausschließlich mit
+seinen Input-Parametern.
+
+### `initialize` – Methode gezielt benennen
 
 ```st
-FUNCTION VIRTUAL CTestCPnDataIn::initialize
-  setPackage(pName:= "com.hoox.profinet.tests");
-  setClassName(pName:= "CTestCPnDataIn");
-  setTestId(pData:= "test_getData_functionality");
+FUNCTION VIRTUAL Pythagoras_Test::initialize
+
+  setPackage(pName:= "Unittest/Example");
+  setClassName(pName:= "CUltimateClass.Pythagoras");
+  setTestId(pData:= "TestID006");
+
 END_FUNCTION
 ```
 
-### `prepare` – Setup
+Wichtig: `setClassName` bekommt hier `"CUltimateClass.Pythagoras"` – damit ist
+im Test-Report direkt ersichtlich, dass nur diese eine Methode geprüft wird.
+Für die anderen Methoden von `CUltimateClass` würden eigene Testklassen
+angelegt (z. B. `Calculate_Test` mit `setClassName(pName:= "CUltimateClass.Calculate")`).
+
+### `execute` – REAL-Assertions mit Toleranz
 
 ```st
-FUNCTION VIRTUAL CTestCPnDataIn::prepare
+FUNCTION VIRTUAL Pythagoras_Test::execute
   VAR_OUTPUT
     bRetcode : BOOL;
   END_VAR
-  VAR
-    i : UDINT;
-  END_VAR
-
-  // Testinstanz initialisieren
-  testInstance.s32Error    := 0;
-  testInstance.u32DataSize := 100;
-
-  // Testdaten (Muster: Bytewert = Index)
-  FOR i := 0 TO 99 DO
-    testInstance.sData.aByte[i] := TO_BYTE(i MOD 256);
-  END_FOR;
-
-  // Testpuffer leeren
-  FOR i := 0 TO 100 DO
-    testBuffer[i] := 0;
-  END_FOR;
-
-  // Setup verifizieren
-  _assert.Equal(actual:= testInstance.u32DataSize$DINT, expected:= 100);
 
   bRetcode := TRUE;
+
+  setMessage(pData:= "Calculate c");
+  _assert.RealEqual(actual      := Testobject.Pythagoras(a:= 4, b:= 3, c:= 0),
+                    expected    := 5,
+                    granularity := 0.1);
+
+  setMessage(pData:= "Calculate a");
+  _assert.RealEqual(actual      := Testobject.Pythagoras(a:= 0, b:= 3, c:= 5),
+                    expected    := 4,
+                    granularity := 0.1);
+
+  setMessage(pData:= "Calculate b");
+  _assert.RealEqual(actual      := Testobject.Pythagoras(a:= 4, b:= 0, c:= 5),
+                    expected    := 3,
+                    granularity := 0.1);
+
+  setMessage(pData:= "Calculate invalid parameters (0,0,0)");
+  _assert.RealEqual(actual      := Testobject.Pythagoras(a:= 0, b:= 0, c:= 0),
+                    expected    := 0,
+                    granularity := 0.1);
+
 END_FUNCTION
 ```
 
-### `execute` – Testfälle
+### Was dieses Beispiel zusätzlich zeigt
 
-```st
-FUNCTION VIRTUAL CTestCPnDataIn::execute
-  VAR_OUTPUT
-    bRetcode : BOOL;
-  END_VAR
-  VAR
-    i : UDINT;
-  END_VAR
-
-  //-----------------------------------------------------------------
-  // Case 1: gültige Größe (50 von 100)
-  //-----------------------------------------------------------------
-  testResult := testInstance.getData(pData:= #testBuffer, u32Size:= 50);
-
-  _assert.assertTrue(bValue:= testResult);
-  _assert.Equal(actual:= testBuffer[0]$DINT,  expected:= 0);
-  _assert.Equal(actual:= testBuffer[25]$DINT, expected:= 25);
-  _assert.Equal(actual:= testBuffer[49]$DINT, expected:= 49);
-  _assert.Equal(actual:= testBuffer[50]$DINT, expected:= 0);   // nichts darüber hinaus
-
-  //-----------------------------------------------------------------
-  // Case 2: oversized
-  //-----------------------------------------------------------------
-  FOR i := 0 TO 100 DO
-    testBuffer[i] := 0;
-  END_FOR;
-
-  testResult := testInstance.getData(pData:= #testBuffer, u32Size:= 200);
-  _assert.assertFalse(bValue:= testResult);
-
-  //-----------------------------------------------------------------
-  // Case 3: NULL-Pointer
-  //-----------------------------------------------------------------
-  testResult := testInstance.getData(pData:= NIL, u32Size:= 10);
-  _assert.assertFalse(bValue:= testResult);
-
-  //-----------------------------------------------------------------
-  // Case 4: Größe 0 (Edge-Case)
-  //-----------------------------------------------------------------
-  testResult := testInstance.getData(pData:= #testBuffer, u32Size:= 0);
-  _assert.assertTrue(bValue:= testResult);
-
-  //-----------------------------------------------------------------
-  // Case 5: exakt verfügbare Größe
-  //-----------------------------------------------------------------
-  FOR i := 0 TO 100 DO
-    testBuffer[i] := 0;
-  END_FOR;
-
-  testResult := testInstance.getData(pData:= #testBuffer, u32Size:= 100);
-  _assert.assertTrue(bValue:= testResult);
-  _assert.Equal(actual:= testBuffer[99]$DINT, expected:= 99);
-
-  bRetcode := TRUE;
-END_FUNCTION
-```
-
-### `cleanUp` – Teardown
-
-```st
-FUNCTION VIRTUAL CTestCPnDataIn::cleanUp
-  VAR_OUTPUT
-    bRetcode : BOOL;
-  END_VAR
-  VAR
-    i : UDINT;
-  END_VAR
-
-  testInstance.s32Error    := 0;
-  testInstance.u32DataSize := 0;
-
-  FOR i := 0 TO 383 DO
-    testInstance.sData.aByte[i] := 0;
-  END_FOR;
-
-  FOR i := 0 TO 100 DO
-    testBuffer[i] := 0;
-  END_FOR;
-
-  bRetcode := TRUE;
-END_FUNCTION
-```
-
-### Variante: ein Testfall pro Klasse
-
-Für klarere Trennung können die Cases auch als eigene Testklassen organisiert werden:
-
-```st
-(* Case 1: gültige Operationen *)
-CTestCPnDataIn_ValidData : CLASS EXTENDS CTestBase
-  testInstance : CPnDataIn;
-  FUNCTION VIRTUAL initialize;
-  FUNCTION VIRTUAL execute VAR_OUTPUT bRetcode : BOOL; END_VAR;
-END_CLASS;
-
-FUNCTION VIRTUAL CTestCPnDataIn_ValidData::initialize
-  setPackage(pName:= "com.hoox.profinet.tests");
-  setClassName(pName:= "CTestCPnDataIn");
-  setTestId(pData:= "test_01_valid_data");
-END_FUNCTION;
-
-FUNCTION VIRTUAL CTestCPnDataIn_ValidData::execute
-  VAR_OUTPUT bRetcode : BOOL; END_VAR
-  VAR
-    testBuffer : ARRAY [0..50] OF BYTE;
-    result     : BOOL;
-  END_VAR
-
-  testInstance.u32DataSize := 100;
-  result := testInstance.getData(pData:= #testBuffer, u32Size:= 50);
-
-  _assert.assertTrue(bValue:= result);
-
-  bRetcode := TRUE;
-END_FUNCTION;
-
-
-(* Case 2: Fehlerbedingungen *)
-CTestCPnDataIn_Errors : CLASS EXTENDS CTestBase
-  testInstance : CPnDataIn;
-  FUNCTION VIRTUAL initialize;
-  FUNCTION VIRTUAL execute VAR_OUTPUT bRetcode : BOOL; END_VAR;
-END_CLASS;
-
-FUNCTION VIRTUAL CTestCPnDataIn_Errors::initialize
-  setPackage(pName:= "com.hoox.profinet.tests");
-  setClassName(pName:= "CTestCPnDataIn");
-  setTestId(pData:= "test_02_error_conditions");
-END_FUNCTION;
-
-FUNCTION VIRTUAL CTestCPnDataIn_Errors::execute
-  VAR_OUTPUT bRetcode : BOOL; END_VAR
-  VAR
-    testBuffer : ARRAY [0..50] OF BYTE;
-    result     : BOOL;
-  END_VAR
-
-  result := testInstance.getData(pData:= NIL, u32Size:= 10);
-  _assert.assertFalse(bValue:= result);
-
-  testInstance.u32DataSize := 50;
-  result := testInstance.getData(pData:= #testBuffer, u32Size:= 100);
-  _assert.assertFalse(bValue:= result);
-
-  bRetcode := TRUE;
-END_FUNCTION;
-```
+- **REAL mit `granularity`** – bei Gleitkommawerten immer eine Toleranz
+  angeben, da exakte Gleichheit in `REAL`-Arithmetik unzuverlässig ist. Die
+  Toleranz sollte so groß sein, dass erwartete Rundungsfehler abgedeckt sind,
+  aber so klein, dass echte Rechenfehler auffallen.
+- **Rückgabewert direkt prüfen** – `actual := Testobject.Pythagoras(...)`
+  übergibt den Rückgabewert direkt an die Assertion, ohne Zwischenvariable.
+- **Methoden separat testen** – `CUltimateClass` hat mehrere Methoden. Für
+  jede interessante Methode eine eigene Testklasse anlegen und `setClassName`
+  mit `"CUltimateClass.MethodenName"` versehen. So ist der Test-Report
+  fein granular.
+- **Edge Case prüfen** – der Aufruf mit `(0, 0, 0)` testet, dass der
+  Fehlerpfad (zu wenige Eingaben) `0` zurückgibt statt abzustürzen.
 
 ---
 
-## 6. Test-Ausführungsablauf
+## 7. Test-Ausführungsablauf
+
+### Beispiel 1: `CCount_Test`
 
 ```
 1. Systeminitialisierung
-   └─> CTestCPnDataIn::initialize()     (einmalig)
-       Package    = "com.hoox.profinet.tests"
-       ClassName  = "CTestCPnDataIn"
-       TestId     = "test_getData_functionality"
+   └─> CCount_Test::initialize()        (einmalig)
+       Package    = "Unittest/Example"
+       ClassName  = "CCount"
+       TestId     = "TestID002"
 
 2. Testzyklus
-   ├─> CTestCPnDataIn::prepare()
-   │     Testdaten initialisieren
-   │     Setup verifizieren (1 Assertion)
-   │
-   ├─> CTestCPnDataIn::execute()
-   │     Case 1 – gültige Daten    (5 Assertions)
-   │     Case 2 – oversized        (1 Assertion)
-   │     Case 3 – NULL-Pointer     (1 Assertion)
-   │     Case 4 – Size 0           (1 Assertion)
-   │     Case 5 – exakt passend    (2 Assertions)
-   │     ───────────────────────────────────
-   │     Summe:                     10 Assertions
-   │
-   └─> CTestCPnDataIn::cleanUp()
-         Alle Daten zurücksetzen
+   └─> CCount_Test::execute()
+         Schritt 1 – add 35         (1 Assertion)
+         Schritt 2 – add 35 more    (1 Assertion)
+         Schritt 3 – sub 70         (1 Assertion)
+         ───────────────────────────────────────
+         Summe:                      3 Assertions
 
 3. Ergebnis
    State   : eStatePassed  (wenn alle bestanden)
-   Passed  : 10
+   Passed  : 3
    Failed  : 0
-   Time    : ca. 0,002 s
+```
+
+### Beispiel 2: `Pythagoras_Test`
+
+```
+1. Systeminitialisierung
+   └─> Pythagoras_Test::initialize()    (einmalig)
+       Package    = "Unittest/Example"
+       ClassName  = "CUltimateClass.Pythagoras"
+       TestId     = "TestID006"
+
+2. Testzyklus
+   └─> Pythagoras_Test::execute()
+         Schritt 1 – Calculate c                    (1 Assertion)
+         Schritt 2 – Calculate a                    (1 Assertion)
+         Schritt 3 – Calculate b                    (1 Assertion)
+         Schritt 4 – Invalid parameters (0,0,0)     (1 Assertion)
+         ──────────────────────────────────────────────────────
+         Summe:                                      4 Assertions
+
+3. Ergebnis
+   State   : eStatePassed  (wenn alle bestanden)
+   Passed  : 4
+   Failed  : 0
 ```
