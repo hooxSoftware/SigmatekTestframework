@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<OpenViews>
+	<View Key="CExternalTest" Type="2" LineNr="1"/>
+	<View Key="CTestLib" Type="2" LineNr="177"/>
+	<View Key="CTestLib" Type="2" LineNr="177"/>
+	<Setting Variable="OutputDebugger" Value="2"/>
+	<Setting Variable="CodeAnalysis" Value=""/>
+</OpenViews>

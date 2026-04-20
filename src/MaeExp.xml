@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<File CRC="914020E0" Version="1.1" SubVersion="2">
+	<Classes>
+		<Class
+			Name     = "CTestLib"
+			Datatype = "CTestLib::EState_t"
+			Size     = "548"
+			Guid     = "7EF37F9A-7E8D-4F2D-9F8F-FFCD28CC16A3">
+			<Types>
+				<Type Name="ECommand_t" Datatype="UDINT" TypeId="ENUM">
+					<Elements>
+						<Type Name="eCmdStop" Value="0"/>
+						<Type Name="eCmdRun" Value="1"/>
+						<Type Name="eCmdReset" Value="2"/>
+						<Type Name="eCmdCreateFile" Value="3"/>
+					</Elements>
+				</Type>
+				<Type Name="EState_t" Datatype="UDINT" TypeId="ENUM">
+					<Elements>
+						<Type Name="eStateIdle" Value="0"/>
+						<Type Name="eStateExecute" Value="1"/>
+						<Type Name="eStateNextSuite" Value="2"/>
+						<Type Name="eStateError" Value="3"/>
+						<Type Name="eStateCreateJUnit" Value="4"/>
+						<Type Name="eStateCreateCoverage" Value="5"/>
+						<Type Name="eStateCreateReport" Value="6"/>
+						<Type Name="eStateNextReport" Value="7"/>
+					</Elements>
+				</Type>
+			</Types>
+			<Servers>
+				<Server Name="eState" Datatype="CTestLib::EState_t" Guid="5D18F520-C33E-4BE2-ACE6-161CBB94BEEE" WriteProtected="true"/>
+				<Server Name="NbSuites" Datatype="UDINT" Guid="C4853DA0-84CF-4E85-A1FD-BA472919385A" WriteProtected="true"/>
+				<Server Name="NbRun" Datatype="UDINT" Guid="57B48156-0363-496D-9FE5-72008976A7E9" WriteProtected="true"/>
+				<Server Name="NbPassed" Datatype="UDINT" Guid="A1A3A455-924C-45FA-A15A-EBEE1C5DC640" WriteProtected="true"/>
+				<Server Name="NbFailed" Datatype="UDINT" Guid="44F58ADA-A310-4B34-9F46-2098B895E0A1" WriteProtected="true"/>
+				<Server Name="Command" Datatype="CTestLib::ECommand_t" Guid="3256E758-1ED7-4897-ABBD-A4CECAC3E73E" WriteProtected="false"/>
+			</Servers>
+			<Objects>
+				<Object Name="m_strActualTest" Datatype="StringRAM" Guid="1E864795-E44D-44AE-A2F8-BB54F9287177"/>
+				<Object Name="m_TestRunID" Datatype="Ram" Guid="831F320A-51D1-4668-8647-C79F3DEFF383"/>
+			</Objects>
+		</Class>
+		<Class
+			Name     = "Ram"
+			Datatype = "DINT"
+			Size     = "20"
+			Guid     = "67843DDE-277A-11D4-83FF-00902787C17B">
+			<Servers>
+				<Server Name="Data" Datatype="DINT" Guid="67843DDF-277A-11D4-83FF-00902787C17B" WriteProtected="false"/>
+			</Servers>
+		</Class>
+		<Class
+			Name     = "StringInternal"
+			Datatype = "UDINT"
+			Base     = "VirtualBaseInit"
+			Size     = "48"
+			Guid     = "2C12408A-7CCA-458A-912B-98C634EE4BD9">
+		</Class>
+		<Class
+			Name     = "StringRAM"
+			Datatype = "UDINT"
+			Base     = "StringInternal"
+			Size     = "60"
+			Guid     = "98E72A8A-307A-4EB2-9A52-A75C6DC58534">
+			<Servers>
+				<Server Name="Data" Datatype="STRING" Guid="81990015-D505-4977-9326-733789F9FEAA" WriteProtected="false"/>
+			</Servers>
+		</Class>
+		<Class
+			Name     = "VirtualBaseInit"
+			Datatype = "UDINT"
+			Size     = "12"
+			Guid     = "9FBB5A34-CCCF-441F-A614-0CCECBD76648">
+		</Class>
+	</Classes>
+	<Objects>
+		<Object Name="TestLib" Datatype="CTestLib" Guid="3E4CA184-FB5D-47CC-AF54-5C676C50CCBA"/>
+	</Objects>
+	<UnitDefinitions>
+		<UnitGrp Name="Acceleration">
+			<Units>
+				<Unit Name="mmPsec2" Factor="1" Divisor="1"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Angle">
+			<Units>
+				<Unit Name="deg" Factor="1" Divisor="10000"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Area">
+			<Units>
+				<Unit Name="mm2" Factor="1" Divisor="10"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Force">
+			<Units>
+				<Unit Name="kN" Factor="1" Divisor="1000" Base="N"/>
+				<Unit Name="N" Factor="1" Divisor="1"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Length">
+			<Units>
+				<Unit Name="m" Factor="1" Divisor="1000" Base="mm"/>
+				<Unit Name="mm" Factor="1" Divisor="10000"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Memory">
+			<Units>
+				<Unit Name="GB" Factor="1" Divisor="1024" Base="MB"/>
+				<Unit Name="kB" Factor="1" Divisor="1024"/>
+				<Unit Name="MB" Factor="1" Divisor="1024" Base="kB"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Pressure">
+			<Units>
+				<Unit Name="bar" Factor="1" Divisor="1000"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Revolution">
+			<Units>
+				<Unit Name="RPM" Factor="1" Divisor="1000"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Speed">
+			<Units>
+				<Unit Name="mlpmin" Factor="1" Divisor="1"/>
+				<Unit Name="mmpsec" Factor="1" Divisor="10000"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Time">
+			<Units>
+				<Unit Name="hours" Factor="1" Divisor="60" Base="min"/>
+				<Unit Name="min" Factor="1" Divisor="60" Base="secs"/>
+				<Unit Name="ms" Factor="1" Divisor="1"/>
+				<Unit Name="sec" Factor="1" Divisor="1000"/>
+				<Unit Name="secs" Factor="1" Divisor="1000" Base="ms"/>
+			</Units>
+		</UnitGrp>
+		<UnitGrp Name="Volume">
+			<Units>
+				<Unit Name="ccm" Factor="1" Divisor="1"/>
+			</Units>
+		</UnitGrp>
+	</UnitDefinitions>
+</File>

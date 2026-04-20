@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<Project
+	Version            = "14"
+	Name               = "TestFramework"
+	Revision           = "1.0"
+	OnlineConnection   = "IP Lars Local"
+	SolutionType       = "Small"
+	WriteSrvListOnSave = "true"
+	CLASSType          = "true"
+	Comment            = "V1.0.0-RC15">
+	<OnlineConnectionInfo>
+		<TCPIP ConfigName="IP Lars Local" BUS="3" Password="" IP="127.0.0.1" PORT="1954" SomeFlags="0" PLCID="" Repeater="0" SSLTLS="0" Favorite="0"/>
+	</OnlineConnectionInfo>
+	<HeaderFiles>
+		<File Path=".\Include\unit.h"/>
+		<File Path=".\Include\global.h"/>
+		<File Path=".\Include\UserDef.h"/>
+		<File Path=".\Include\types.h"/>
+		<File Path=".\Include\channels.h"/>
+		<File Path=".\Include\C_global.h"/>
+		<File Path=".\Include\C_types.h"/>
+		<File Path=".\Include\C_channels.h"/>
+		<File Path=".\Include\lslpublictypes.h"/>
+		<File Path=".\Class\CTestLib\Coverage.h" Global="true"/>
+		<File Path=".\Class\CTestLib\_Version.h" Global="true"/>
+	</HeaderFiles>
+	<ClassFiles>
+		<File Path=".\Class\CTestSuite\CTestSuite.st"/>
+		<File Path=".\Class\CTestBase\CTestBase.st"/>
+		<File Path=".\Class\CLinkedList\CLinkedList.st"/>
+		<File Path=".\Class\CTestLib\CTestLib.st"/>
+		<File Path=".\Class\CTestScreen\CTestScreen.st"/>
+		<File Path=".\Class\CScreenInterface\CScreenInterface.st"/>
+		<File Path=".\Class\CTestReportBase\CTestReportBase.st"/>
+		<File Path=".\Class\CStandardTestReport\CStandardTestReport.st"/>
+		<File Path=".\Class\CXmlTestReport\CXmlTestReport.st"/>
+		<File Path=".\Class\CJUnitReport\CJUnitReport.st"/>
+		<File Path=".\Class\CCoverageInfo\CCoverageInfo.st" Mode="2"/>
+		<File Path=".\Class\CAssert\CAssert.st"/>
+		<File Path=".\Class\CTestLib\Coverage.cpp" Mode="2"/>
+		<File Path=".\Class\CExternalTest\CExternalTest.st"/>
+	</ClassFiles>
+	<NetworkFiles>
+		<File Path=".\Network\TestMain\TestMain.lcn"/>
+	</NetworkFiles>
+	<ObjectFiles>
+		<File Path=".\Loader\Source\Loader.lob" Downloadable="false"/>
+	</ObjectFiles>
+	<LibraryFiles>
+		<File Path=".\OS Interface\OS Interface.lcp"/>
+		<File Path=".\System\System.lcp"/>
+	</LibraryFiles>
+	<DocuFiles>
+		<File Path=".\Class\CTestLib\Testframework.pdf" Downloadable="false"/>
+	</DocuFiles>
+	<Linked>
+		<Classes>
+			<Class Name="_AlarmDisplay" Library="System"/>
+			<Class Name="_Bit32" Library="System"/>
+			<Class Name="_Bit32Ram" Library="System"/>
+			<Class Name="_FileSys" Library="OS Interface"/>
+			<Class Name="_Global" Library="System"/>
+			<Class Name="_Lse" Library="System"/>
+			<Class Name="_MultiTask" Library="OS Interface"/>
+			<Class Name="_MyIO" Library="System"/>
+			<Class Name="_Radio32" Library="System"/>
+			<Class Name="_Radio32Ram" Library="System"/>
+			<Class Name="_Screen" Library="System"/>
+			<Class Name="_ScrollArea" Library="System"/>
+			<Class Name="_ScrollArea2" Library="System"/>
+			<Class Name="_SysDateTime" Library="System"/>
+			<Class Name="_ToolCat" Library="System"/>
+			<Class Name="DataServiceClient" Library="System"/>
+			<Class Name="GetBroadCastData" Library="System"/>
+			<Class Name="Graphic" Library="OS Interface"/>
+			<Class Name="Merker" Library="System"/>
+			<Class Name="MerkerEx" Library="System"/>
+			<Class Name="Ram" Library="System"/>
+			<Class Name="RAMex" Library="System"/>
+			<Class Name="SigCLib" Library="OS Interface"/>
+			<Class Name="String" Library="System"/>
+			<Class Name="StringInternal" Library="System"/>
+			<Class Name="StringRAM" Library="System"/>
+			<Class Name="System" Library="OS Interface"/>
+			<Class Name="VirtualBaseInit" Library="System"/>
+		</Classes>
+	</Linked>
+	<Options>
+		<Target UseFPU="true" CompileAllArchs="true">
+		</Target>
+		<Compiler
+			CompilerVersion         = "77"
+			VariableNeverUsed       = "true"
+			ValueNeverUsed          = "true"
+			LabelNeverUsed          = "true"
+			ParameterNeverUsed      = "true"
+			VariableUnitialized     = "true"
+			RetValueUnitialized     = "true"
+			PrivateDataAccess       = "true"
+			SemicolonMissing        = "true"
+			ConditionConstant       = "true"
+			ExactTypeChecking       = "true"
+			CheckConnectionTypes    = "true"
+			CompileCFiles           = "true"
+			Alignment               = "4 Byte"
+			ReducedClientDependency = "true"
+			MaxModuleErrorCount     = "100"
+			MathLibrary             = "Legacy Library">
+		</Compiler>
+		<Directories
+			Class       = ".\Class\"
+			Network     = ".\Network\"
+			Source      = ".\Source\"
+			Include     = ".\Include\"
+			Loader      = ".\Loader\"
+			PrjInternal = ".\ProjectInternal\">
+		</Directories>
+	</Options>
+	<SigmatekFolders>
+		<OSInterfaceFolders>
+			<Folder Name="old">
+				<Class Name="Graphic"/>
+				<Class Name="System"/>
+			</Folder>
+		</OSInterfaceFolders>
+		<Folder Name="System">
+			<Folder Name="DataService">
+				<Class Name="DataServiceClient"/>
+			</Folder>
+			<Folder Name="Memory">
+				<Class Name="Merker"/>
+				<Class Name="MerkerEx"/>
+				<Class Name="Ram"/>
+				<Class Name="RAMex"/>
+				<Class Name="String"/>
+				<Class Name="StringInternal"/>
+				<Class Name="StringRAM"/>
+				<Class Name="VirtualBaseInit"/>
+			</Folder>
+			<Folder Name="Miscellaneous">
+				<Class Name="_SysDateTime"/>
+			</Folder>
+			<Folder Name="Visualisation">
+				<Folder Name="LseRtk">
+					<Folder Name="Alarm">
+						<Folder Name="Visu">
+							<Class Name="_AlarmDisplay"/>
+						</Folder>
+					</Folder>
+					<Folder Name="Project">
+						<Class Name="_Lse"/>
+					</Folder>
+					<Folder Name="UserInterface">
+						<Class Name="_Bit32"/>
+						<Class Name="_Bit32Ram"/>
+						<Class Name="_Global"/>
+						<Class Name="_MyIO"/>
+						<Class Name="_Radio32"/>
+						<Class Name="_Radio32Ram"/>
+						<Class Name="_Screen"/>
+						<Class Name="_ScrollArea"/>
+						<Class Name="_ScrollArea2"/>
+						<Class Name="_ToolCat"/>
+						<Class Name="GetBroadCastData"/>
+					</Folder>
+				</Folder>
+			</Folder>
+		</Folder>
+	</SigmatekFolders>
+	<LinkedFolders>
+		<Folder Name="Base">
+		</Folder>
+	</LinkedFolders>
+	<ClassFolders>
+		<Folder Name="hoox">
+			<Class Name="CExternalTest"/>
+			<Class Name="CTestLib"/>
+			<Class Name="CTestSuite"/>
+			<Folder Name="Base">
+				<Class Name="CAssert"/>
+				<Class Name="CScreenInterface"/>
+				<Class Name="CTestBase"/>
+				<Class Name="CTestReportBase"/>
+				<Class Name="CTestScreen"/>
+			</Folder>
+			<Folder Name="Memory">
+				<Class Name="CLinkedList"/>
+			</Folder>
+			<Folder Name="Report">
+				<Class Name="CCoverageInfo"/>
+				<Class Name="CJUnitReport"/>
+				<Class Name="CStandardTestReport"/>
+				<Class Name="CXmlTestReport"/>
+			</Folder>
+		</Folder>
+	</ClassFolders>
+	<RevDoku>
+		<Owner Company="hoox.software" Author="padr"/>
+		<Dokumentation Revision="1.0" Date="2026-01-30" Author="padr" Company="hoox.software"/>
+	</RevDoku>
+	<Units>
+		<UnitGrp Name="Acceleration">
+			<Unit Name="mmPsec2" Factor="1" Ref="S"/>
+		</UnitGrp>
+		<UnitGrp Name="Angle">
+			<Unit Name="deg" Factor="10000" Ref="S"/>
+		</UnitGrp>
+		<UnitGrp Name="Area">
+			<Unit Name="mm2" Factor="10" Ref="S" Comment="x.x sqare millimeter"/>
+		</UnitGrp>
+		<UnitGrp Name="Force">
+			<Unit Name="kN" Factor="1000 N" BaseDivisor="1000" Ref="S" Base="N"/>
+			<Unit Name="N" Factor="1" Ref="S"/>
+		</UnitGrp>
+		<UnitGrp Name="Length">
+			<Unit Name="m" Factor="1000 mm" BaseDivisor="1000" Ref="S" Base="mm"/>
+			<Unit Name="mm" Factor="10000" Ref="S"/>
+		</UnitGrp>
+		<UnitGrp Name="Memory">
+			<Unit Name="GB" Factor="1024 MB" BaseDivisor="1024" Ref="S" Base="MB"/>
+			<Unit Name="kB" Factor="1024" Ref="S"/>
+			<Unit Name="MB" Factor="1024 kB" BaseDivisor="1024" Ref="S" Base="kB"/>
+		</UnitGrp>
+		<UnitGrp Name="Pressure">
+			<Unit Name="bar" Factor="1000" Ref="S" Comment="x.xxx Bar ( MilliBar)"/>
+		</UnitGrp>
+		<UnitGrp Name="Revolution">
+			<Unit Name="RPM" Factor="1000" Ref="S"/>
+		</UnitGrp>
+		<UnitGrp Name="Speed">
+			<Unit Name="mlpmin" Factor="1" Ref="S"/>
+			<Unit Name="mmpsec" Factor="10000" Ref="S"/>
+		</UnitGrp>
+		<UnitGrp Name="Time">
+			<Unit Name="hours" Factor="60 min" BaseDivisor="60" Ref="S" Base="min"/>
+			<Unit Name="min" Factor="60 secs" BaseDivisor="60" Ref="S" Base="secs"/>
+			<Unit Name="ms" Factor="1" Ref="S"/>
+			<Unit Name="sec" Factor="1000" Ref="S"/>
+			<Unit Name="secs" Factor="1000 ms" BaseDivisor="1000" Ref="S" Base="ms"/>
+		</UnitGrp>
+		<UnitGrp Name="Volume">
+			<Unit Name="ccm" Factor="1" Ref="S" Comment="cubic centimeter"/>
+		</UnitGrp>
+	</Units>
+</Project>
