@@ -2,7 +2,7 @@
 
 **Vollständige API-Referenz für `CTestBase` und `CAssert`**
 
-Einstieg und Konzepte siehe [Overview](LASAL2-Testframework-Overview.md).
+Einstieg und Konzepte siehe [Overview](Overview.md).
 
 ---
 

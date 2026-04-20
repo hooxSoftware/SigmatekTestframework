@@ -5,7 +5,7 @@
 Dieses Dokument gibt einen Einstieg in das Framework: Was es leistet, wie der
 Lifecycle aussieht und wie man in wenigen Schritten den ersten Test schreibt.
 Für alle Signaturen, Parameter und State-Werte siehe die separate
-[Reference](LASAL2-Testframework-Reference.md).
+[Reference](Reference.md).
 
 ---
 
